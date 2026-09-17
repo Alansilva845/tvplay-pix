@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TVPlay • Assinatura</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#10182d;color:#fff}
+.wrap{max-width:520px;margin:auto;padding:28px 18px}.card{background:#18223e;border-radius:18px;padding:24px;box-shadow:0 12px 35px #0005}
+h1{text-align:center;margin:4px 0 8px}.sub{text-align:center;color:#b9c2d8}.price{text-align:center;font-size:42px;font-weight:800;margin:18px 0}
+label{display:block;margin:14px 0 6px;color:#dce3f3}input{width:100%;box-sizing:border-box;padding:14px;border-radius:10px;border:1px solid #34415f;background:#0e1529;color:#fff;font-size:16px}
+button{width:100%;padding:15px;border:0;border-radius:10px;background:#3478f6;color:#fff;font-weight:700;font-size:17px;margin-top:18px}.muted{color:#9da9c2;font-size:13px;text-align:center;margin-top:14px}
+#pay{display:none}.qr{display:block;width:240px;max-width:100%;margin:18px auto;border-radius:10px;background:#fff;padding:8px}.copy{word-break:break-all;background:#0e1529;padding:12px;border-radius:10px;font-size:13px}
+.ok{background:#123d2b;border:1px solid #2f9b6b;padding:14px;border-radius:10px;margin-top:15px}
+</style></head>
+<body><div class="wrap"><div class="card">
+<h1>TVPlay</h1><div class="sub">Assinatura mensal</div><div class="price">R$ 30,00</div>
+<form id="form">
+<label>Nome</label><input id="name" required>
+<label>WhatsApp</label><input id="whatsapp" required placeholder="(00) 00000-0000">
+<label>E-mail</label><input id="email" type="email" required>
+<button>Gerar Pix</button>
+</form>
+<div id="pay"><h2>Pagamento via Pix</h2><p id="msg">Escaneie o QR Code ou copie o código.</p>
+<img id="qr" class="qr"><div class="copy" id="code"></div>
+<button id="copy">Copiar Pix</button><div id="status" class="muted">Aguardando pagamento...</div></div>
+<div class="muted">Após a confirmação, o serviço será liberado em até 1 hora.</div>
+</div></div>
+<script>
+let orderId="", timer;
+document.querySelector("#form").onsubmit=async e=>{
+ e.preventDefault();
+ const b={name:name.value,whatsapp:whatsapp.value,email:email.value};
+ const r=await fetch("/api/create-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+ const d=await r.json(); if(!r.ok){alert(d.error||"Erro");return}
+ orderId=d.orderId; form.style.display="none"; pay.style.display="block";
+ qr.src="data:image/png;base64,"+d.qrCodeBase64; code.textContent=d.qrCode;
+ timer=setInterval(check,4000);
+};
+copy.onclick=()=>navigator.clipboard.writeText(code.textContent);
+async function check(){
+ const r=await fetch("/api/status/"+encodeURIComponent(orderId)); const d=await r.json();
+ if(d.status==="approved"){clearInterval(timer);status.innerHTML='<div class="ok">✅ Pagamento confirmado!<br>Seu serviço será liberado em até 1 hora.</div>'}
+}
+</script></body></html>
