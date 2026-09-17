@@ -160,4 +160,6 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.listen(PORT,"0.0.0.0", () => { console.log(`TVPlay portal rodando na porta ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`TVPlay portal rodando na porta ${PORT}`);
+});
