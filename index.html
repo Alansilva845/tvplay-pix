@@ -26,19 +26,92 @@ button{width:100%;padding:15px;border:0;border-radius:10px;background:#3478f6;co
 <div class="muted">Após a confirmação, o serviço será liberado em até 1 hora.</div>
 </div></div>
 <script>
-let orderId="", timer;
-document.querySelector("#form").onsubmit=async e=>{
- e.preventDefault();
- const b={name:name.value,whatsapp:whatsapp.value,email:email.value};
- const r=await fetch("/api/create-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
- const d=await r.json(); if(!r.ok){alert(d.error||"Erro");return}
- orderId=d.orderId; form.style.display="none"; pay.style.display="block";
- qr.src="data:image/png;base64,"+d.qrCodeBase64; code.textContent=d.qrCode;
- timer=setInterval(check,4000);
+let orderId = "";
+let timer;
+
+const form = document.getElementById("form");
+const nameInput = document.getElementById("name");
+const whatsappInput = document.getElementById("whatsapp");
+const emailInput = document.getElementById("email");
+
+const pay = document.getElementById("pay");
+const qr = document.getElementById("qr");
+const code = document.getElementById("code");
+const copyButton = document.getElementById("copy");
+const statusElement = document.getElementById("status");
+
+form.onsubmit = async function(e) {
+    e.preventDefault();
+
+    const name = nameInput.value.trim();
+    const whatsapp = whatsappInput.value.trim();
+    const email = emailInput.value.trim();
+
+    if (!name || !whatsapp || !email) {
+        alert("Preencha nome, WhatsApp e e-mail.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/create-payment", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name,
+                whatsapp,
+                email
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Erro ao gerar Pix.");
+            return;
+        }
+
+        orderId = data.orderId;
+
+        form.style.display = "none";
+        pay.style.display = "block";
+
+        qr.src = "data:image/png;base64," + data.qrCodeBase64;
+        code.textContent = data.qrCode;
+
+        timer = setInterval(checkPayment, 4000);
+
+    } catch (error) {
+        console.error(error);
+        alert("Não foi possível conectar ao servidor.");
+    }
 };
-copy.onclick=()=>navigator.clipboard.writeText(code.textContent);
-async function check(){
- const r=await fetch("/api/status/"+encodeURIComponent(orderId)); const d=await r.json();
- if(d.status==="approved"){clearInterval(timer);status.innerHTML='<div class="ok">✅ Pagamento confirmado!<br>Seu serviço será liberado em até 1 hora.</div>'}
+
+copyButton.onclick = function() {
+    navigator.clipboard.writeText(code.textContent);
+    alert("Código Pix copiado!");
+};
+
+async function checkPayment() {
+    try {
+        const response = await fetch(
+            "/api/status/" + encodeURIComponent(orderId)
+        );
+
+        const data = await response.json();
+
+        if (data.status === "approved") {
+            clearInterval(timer);
+
+            statusElement.innerHTML =
+                '<div class="ok">✅ Pagamento confirmado!<br>' +
+                'Seu serviço será liberado em até 1 hora.</div>';
+        }
+
+    } catch (error) {
+        console.error("Erro ao consultar pagamento:", error);
+    }
 }
+</script>
 </script></body></html>
