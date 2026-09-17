@@ -156,8 +156,8 @@ app.get("/admin", basicAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "admin.html"));
 });
 
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.listen(PORT, () => console.log(`TVPlay portal rodando na porta ${PORT}`));
+app.listen(PORT,"0.0.0.0", () => { console.log(`TVPlay portal rodando na porta ${PORT}`));
