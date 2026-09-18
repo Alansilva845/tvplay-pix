@@ -13,18 +13,59 @@ button{width:100%;padding:15px;border:0;border-radius:10px;background:#3478f6;co
 .ok{background:#123d2b;border:1px solid #2f9b6b;padding:14px;border-radius:10px;margin-top:15px}
 </style></head>
 <body><div class="wrap"><div class="card">
-<h1>TVPlay</h1><div class="sub">Assinatura mensal</div><div class="price">R$ 30,00</div>
+<div class="logo">TVPlay</div>
+
+<h1>TVPlay</h1>
+<div class="sub">Assinatura IPTV</div>
+
 <form id="form">
-<label>Nome</label><input id="name" required>
-<label>WhatsApp</label><input id="whatsapp" required placeholder="(00) 00000-0000">
-<label>E-mail</label><input id="email" type="email" required>
+
+<label>Nome</label>
+<input id="name" required>
+
+<label>WhatsApp</label>
+<input id="whatsapp" required placeholder="(00) 00000-0000">
+
+<label>E-mail</label>
+<input id="email" type="email" required>
+
+<label>Escolha seu plano</label>
+<select id="plano" required>
+    <option value="">Selecione um plano</option>
+    <option value="1">1 mês — R$ 30,00</option>
+    <option value="2">2 meses — R$ 50,00</option>
+    <option value="3">3 meses — R$ 70,00</option>
+    <option value="4">4 meses — R$ 90,00</option>
+    <option value="5">5 meses — R$ 100,00</option>
+</select>
+
 <button>Gerar Pix</button>
 </form>
-<div id="pay"><h2>Pagamento via Pix</h2><p id="msg">Escaneie o QR Code ou copie o código.</p>
-<img id="qr" class="qr"><div class="copy" id="code"></div>
-<button id="copy">Copiar Pix</button><div id="status" class="muted">Aguardando pagamento...</div></div>
-<div class="muted">Após a confirmação, o serviço será liberado em até 1 hora.</div>
-</div></div>
+
+<div id="pay">
+    <h2>Pagamento via Pix</h2>
+
+    <p id="msg">Escaneie o QR Code ou copie o código.</p>
+
+    <img id="qr" class="qr">
+
+    <div class="copy" id="code"></div>
+
+    <button id="copy">Copiar Pix</button>
+
+    <div id="status" class="muted">Aguardando pagamento...</div>
+
+    <div class="muted">
+        Após a confirmação, o serviço será liberado em até 1 hora.
+    </div>
+
+    <div id="now" class="muted"></div>
+
+    <div class="support">
+        📱 Suporte: <strong>(74) 99993-20877</strong>
+    </div>
+</div>
+
 <script>
 let orderId = "";
 let timer;
@@ -43,28 +84,29 @@ const statusElement = document.getElementById("status");
 form.onsubmit = async function(e) {
     e.preventDefault();
 
-    const name = nameInput.value.trim();
-    const whatsapp = whatsappInput.value.trim();
-    const email = emailInput.value.trim();
+   const name = nameInput.value.trim();
+const whatsapp = whatsappInput.value.trim();
+const email = emailInput.value.trim();
+const plano = document.getElementById("plano").value;
 
-    if (!name || !whatsapp || !email) {
-        alert("Preencha nome, WhatsApp e e-mail.");
-        return;
-    }
+if (!name || !whatsapp || !email || !plano) {
+    alert("Preencha todos os campos e escolha um plano.");
+    return;
+}
 
-    try {
-        const response = await fetch("/api/create-payment", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                name,
-                whatsapp,
-                email
-            })
-        });
-
+try {
+    const response = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name,
+            whatsapp,
+            email,
+            plano
+        })
+    });
         const data = await response.json();
 
         if (!response.ok) {
