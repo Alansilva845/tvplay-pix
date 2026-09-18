@@ -1,17 +1,176 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TVPlay • Painel</title><style>
-body{font-family:Arial;background:#10182d;color:#fff;margin:0}.wrap{max-width:900px;margin:auto;padding:24px}h1{margin-bottom:6px}
-.card{background:#18223e;padding:18px;border-radius:14px;margin:12px 0}.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-small{color:#aab5cc}button{border:0;border-radius:8px;padding:10px 13px;background:#3478f6;color:#fff;font-weight:700}
-.paid{color:#5ee0a0}.pending{color:#ffd36b}.activated{color:#79b5ff}
-</style></head><body><div class="wrap"><h1>TVPlay — Pagamentos</h1><div id="list">Carregando...</div></div>
-<script>
-async function load(){const r=await fetch("/api/admin/orders");const a=await r.json();list.innerHTML=a.length?a.map(o=>`
-<div class="card"><div class="row"><div><b>${esc(o.name)}</b><br><small>${esc(o.whatsapp)} • ${esc(o.email)}</small></div>
-<div>R$ ${Number(o.amount).toFixed(2).replace(".",",")}<br><small>${new Date(o.createdAt).toLocaleString("pt-BR")}</small></div></div>
-<p>Status: <b class="${o.status}">${o.status}</b></p>${o.status==="approved"?`<button onclick="activate('${o.id}')">Marcar como ativado</button>`:""}</div>`).join(""):"Nenhum pedido.";
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TVPlay - Painel</title>
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#10182d;
+  color:#fff;
+  margin:0;
+  padding:24px;
 }
-async function activate(id){await fetch("/api/admin/orders/"+id+"/activate",{method:"POST"});load()}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#039;"}[m]))}
-load();setInterval(load,10000);
-</script></body></html>
+.cartao{
+  background:#18273c;
+  padding:18px;
+  border-radius:14px;
+  max-width:900px;
+  margin:auto;
+}
+h1{
+  margin-top:0;
+}
+.linha{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  margin-bottom:10px;
+  background:#3478f6;
+  border-radius:10px;
+  flex-wrap:wrap;
+}
+.pequeno{
+  color:#aab5c9;
+}
+.botao{
+  border:0;
+  border-radius:8px;
+  padding:10px 14px;
+  cursor:pointer;
+  background:#fff;
+  color:#3478f6;
+  font-weight:700;
+}
+.status{
+  font-weight:700;
+}
+.approved{
+  color:#5ee080;
+}
+.pending{
+  color:#ffd36b;
+}
+</style>
+</head>
+
+<body>
+
+<div class="cartao">
+  <h1>TVPlay — Pagamentos</h1>
+  <div id="lista">Carregando...</div>
+</div>
+
+<script>
+async function carregar(){
+
+  const lista = document.getElementById("lista");
+
+  try{
+
+    const resposta = await fetch("/api/admin/orders");
+
+    if(!resposta.ok){
+      throw new Error("Erro HTTP " + resposta.status);
+    }
+
+    const pedidos = await resposta.json();
+
+    if(!Array.isArray(pedidos) || pedidos.length === 0){
+      lista.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+      return;
+    }
+
+    lista.innerHTML = pedidos.map(function(p){
+
+      const status = p.status || "pending";
+
+      const botao = status === "approved"
+        ? '<button class="botao" onclick="ativar(\'' + p.id + '\')">Marcar como ativado</button>'
+        : "";
+
+      return `
+        <div class="linha">
+
+          <div>
+            <b>${esc(p.name || "Sem nome")}</b><br>
+            <span class="pequeno">
+              WhatsApp: ${esc(p.whatsapp || "-")}<br>
+              E-mail: ${esc(p.email || "-")}<br>
+              Valor: R$ 30,00
+            </span>
+          </div>
+
+          <div>
+            <span class="status ${esc(status)}">
+              Status: ${esc(status)}
+            </span>
+            <br><br>
+            ${botao}
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+  }catch(erro){
+
+    console.error(erro);
+
+    lista.innerHTML =
+      '<p style="color:#ff7777">Não foi possível carregar os pedidos.</p>' +
+      '<p class="pequeno">' + esc(erro.message) + '</p>';
+  }
+}
+
+async function ativar(id){
+
+  try{
+
+    const resposta = await fetch(
+      "/api/admin/orders/" + encodeURIComponent(id) + "/activate",
+      {
+        method:"POST"
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if(!resposta.ok){
+      alert(dados.error || "Não foi possível ativar.");
+      return;
+    }
+
+    alert("Pedido marcado como ativado!");
+
+    carregar();
+
+  }catch(erro){
+
+    console.error(erro);
+    alert("Erro ao ativar o pedido.");
+  }
+}
+
+function esc(valor){
+
+  return String(valor)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+carregar();
+
+setInterval(carregar,10000);
+</script>
+
+</body>
+</html>
