@@ -16,6 +16,13 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "troque-me";
 const DB = path.join(__dirname, "data.json");
+const PLANOS = {
+  "1": { meses: 1, valor: 30 },
+  "2": { meses: 2, valor: 50 },
+  "3": { meses: 3, valor: 70 },
+  "4": { meses: 4, valor: 90 },
+  "5": { meses: 5, valor: 100 }
+};
 
 function readDb() {
   try { return JSON.parse(fs.readFileSync(DB, "utf8")); }
@@ -52,11 +59,17 @@ app.post("/api/create-payment", async (req, res) => {
       return res.status(500).json({ error: "PUBLIC_URL precisa ser uma URL HTTPS pública." });
     }
 
-    const { name, whatsapp, email } = req.body;
+    const { name, whatsapp, email, plano } = req.body;
     if (!name || !whatsapp || !email) {
       return res.status(400).json({ error: "Preencha nome, WhatsApp e e-mail." });
     }
+const planoSelecionado = PLANOS[String(plano)];
 
+if (!planoSelecionado) {
+  return res.status(400).json({ error: "Plano inválido." });
+}
+
+const valor = planoSelecionado.valor;
     const externalReference = "TVP-" + Date.now() + "-" + crypto.randomBytes(3).toString("hex");
 
     const mpRes = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -67,7 +80,7 @@ app.post("/api/create-payment", async (req, res) => {
         "X-Idempotency-Key": crypto.randomUUID()
       },
       body: JSON.stringify({
-        transaction_amount: 30.00,
+       transaction_amount: valor,
         description: "Assinatura TVPlay",
         payment_method_id: "pix",
         external_reference: externalReference,
@@ -85,8 +98,9 @@ app.post("/api/create-payment", async (req, res) => {
     db.orders.unshift({
       id: externalReference,
       mpPaymentId: String(data.id),
-      name, whatsapp, email,
-      amount: 30.00,
+    name, whatsapp, email,
+plano: planoSelecionado.meses,
+amount: valor,
       status: data.status || "pending",
       createdAt: new Date().toISOString()
     });
