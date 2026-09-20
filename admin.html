@@ -100,8 +100,10 @@ async function carregar(){
             <b>${esc(p.name || "Sem nome")}</b><br>
             <span class="pequeno">
               WhatsApp: ${esc(p.whatsapp || "-")}<br>
-              E-mail: ${esc(p.email || "-")}<br>
-              Valor: R$ ${Number(p.amount || 0).toFixed(2).replace(".", ",")}
+             E-mail: ${esc(p.email || "-")}<br>
+Plano: ${esc(p.plano || "-")} ${Number(p.plano) === 1 ? "mês" : "meses"}<br>
+Valor: R$ ${Number(p.amount || 0).toFixed(2).replace(".", ",")}<br>
+${p.activatedAt ? Ativado em: ${formatarData(p.activatedAt)}<br>Vencimento: ${formatarData(vencimento(p.activatedAt, p.plano))} : ""}
             </span>
           </div>
 
@@ -156,7 +158,20 @@ async function ativar(id){
     alert("Erro ao ativar o pedido.");
   }
 }
+function formatarData(data){
+  if(!data) return "-";
 
+  return new Date(data).toLocaleDateString("pt-BR");
+}
+
+function vencimento(data, meses){
+  if(!data || !meses) return null;
+
+  const d = new Date(data);
+  d.setMonth(d.getMonth() + Number(meses));
+
+  return d.toISOString();
+}
 function esc(valor){
 
   return String(valor)
