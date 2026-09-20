@@ -103,7 +103,7 @@ async function carregar(){
              E-mail: ${esc(p.email || "-")}<br>
 Plano: ${esc(p.plano || "-")} ${Number(p.plano) === 1 ? "mês" : "meses"}<br>
 Valor: R$ ${Number(p.amount || 0).toFixed(2).replace(".", ",")}<br>
-${p.activatedAt ? Ativado em: ${formatarData(p.activatedAt)}<br>Vencimento: ${formatarData(vencimento(p.activatedAt, p.plano))} : ""}
+${p.activatedAt ? "Ativado em: " + formatarData(p.activatedAt) + "<br>Vencimento: " + formatarData(vencimento(p.activatedAt, p.plano)) : ""}
             </span>
           </div>
 
