@@ -131,7 +131,9 @@ app.post("/api/create-payment", async (req, res) => {
           description: "Assinatura TVPlay",
           payment_method_id: "pix",
           external_reference: externalReference,
-          payer: { email }
+          payer: {
+            email
+          }
         })
       }
     );
@@ -146,7 +148,8 @@ app.post("/api/create-payment", async (req, res) => {
       });
     }
 
-    const payment = data.point_of_interaction?.transaction_data;
+    const payment =
+      data.point_of_interaction?.transaction_data;
 
     const { error: insertError } = await supabase
       .from("orders")
@@ -196,7 +199,9 @@ app.get("/api/status/:orderId", async (req, res) => {
       .eq("order_id", req.params.orderId)
       .maybeSingle();
 
-    if (error) return dbError(res, error);
+    if (error) {
+      return dbError(res, error);
+    }
 
     if (!order) {
       return res.status(404).json({
@@ -236,7 +241,9 @@ app.post("/api/webhook", async (req, res) => {
       }
     );
 
-    if (!mpRes.ok) return;
+    if (!mpRes.ok) {
+      return;
+    }
 
     const payment = await mpRes.json();
 
@@ -251,7 +258,9 @@ app.post("/api/webhook", async (req, res) => {
       return;
     }
 
-    if (!order) return;
+    if (!order) {
+      return;
+    }
 
     const { error: updateError } = await supabase
       .from("orders")
@@ -279,9 +288,13 @@ app.get("/api/admin/orders", basicAuth, async (req, res) => {
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", {
+        ascending: false
+      });
 
-    if (error) return dbError(res, error);
+    if (error) {
+      return dbError(res, error);
+    }
 
     res.json(
       (data || []).map((p) => ({
@@ -316,6 +329,7 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
     }
 
     const identificador = String(req.params.id || "");
+
     const isBigintId = /^\d+$/.test(identificador);
 
     let order;
@@ -362,62 +376,6 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
     if (updateError) {
       return dbError(res, updateError);
     }
-
-    res.json({
-      ok: true
-    });
-  } catch (e) {
-    console.error(e);
-
-    res.status(500).json({
-      error: "Erro interno."
-    });
-  }
-});
-
-    const identificador = String(req.params.id || "");
-    const isBigintId = /^\d+$/.test(identificador);
-
-    let order;
-    let findError;
-
-    if (isBigintId) {
-      const result = await supabase
-        .from("orders")
-        .select("id, order_id")
-        .eq("id", Number(identificador))
-        .maybeSingle();
-
-      order = result.data;
-      findError = result.error;
-    } else {
-      const result = await supabase
-        .from("orders")
-        .select("id, order_id")
-        .eq("order_id", identificador)
-        .maybeSingle();
-
-      order = result.data;
-      findError = result.error;
-    }
-
-    if (findError) return dbError(res, findError);
-
-    if (!order) {
-      return res.status(404).json({
-        error: "Pedido não encontrado."
-      });
-    }
-
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        status: "activated",
-        activated_at: new Date().toISOString()
-      })
-      .eq("order_id", order.order_id);
-
-    if (updateError) return dbError(res, updateError);
 
     res.json({
       ok: true
