@@ -259,7 +259,7 @@ app.post("/api/webhook", async (req, res) => {
       .update({
         status: payment.status || order.status
       })
-      .eq("id", order.id);
+    .eq("order_id", order.order_id);
 
     if (updateError) {
       console.error("Webhook update:", updateError);
