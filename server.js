@@ -4,7 +4,6 @@ import crypto from "crypto";
 import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -61,6 +60,7 @@ function basicAuth(req, res, next) {
 
 function dbError(res, error) {
   console.error("Supabase:", error);
+
   return res.status(500).json({
     error: "Erro ao acessar o banco de dados."
   });
@@ -151,7 +151,6 @@ app.post("/api/create-payment", async (req, res) => {
     const { error: insertError } = await supabase
       .from("orders")
       .insert({
-        id: crypto.randomUUID(),
         order_id: externalReference,
         name,
         whatsapp,
@@ -222,7 +221,6 @@ app.post("/api/webhook", async (req, res) => {
   res.sendStatus(200);
 
   try {
-    const type = req.body.type;
     const paymentId = req.body.data?.id;
 
     if (!paymentId || !ACCESS_TOKEN || !supabase) {
@@ -230,7 +228,8 @@ app.post("/api/webhook", async (req, res) => {
     }
 
     const mpRes = await fetch(
-     `https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
         headers: {
           Authorization: `Bearer ${ACCESS_TOKEN}`
         }
@@ -259,7 +258,7 @@ app.post("/api/webhook", async (req, res) => {
       .update({
         status: payment.status || order.status
       })
-    .eq("order_id", order.order_id);
+      .eq("order_id", order.order_id);
 
     if (updateError) {
       console.error("Webhook update:", updateError);
@@ -316,11 +315,31 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
       });
     }
 
-    const { data: order, error: findError } = await supabase
-      .from("orders")
-      .select("id")
-      .eq("order_id", req.params.id)
-      .maybeSingle();
+    const identificador = String(req.params.id || "");
+    const isBigintId = /^\d+$/.test(identificador);
+
+    let order;
+    let findError;
+
+    if (isBigintId) {
+      const result = await supabase
+        .from("orders")
+        .select("id, order_id")
+        .eq("id", Number(identificador))
+        .maybeSingle();
+
+      order = result.data;
+      findError = result.error;
+    } else {
+      const result = await supabase
+        .from("orders")
+        .select("id, order_id")
+        .eq("order_id", identificador)
+        .maybeSingle();
+
+      order = result.data;
+      findError = result.error;
+    }
 
     if (findError) return dbError(res, findError);
 
@@ -336,7 +355,7 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
         status: "activated",
         activated_at: new Date().toISOString()
       })
-      .eq("order_id", req.params.id);
+      .eq("order_id", order.order_id);
 
     if (updateError) return dbError(res, updateError);
 
@@ -359,9 +378,11 @@ app.get("/admin", basicAuth, (req, res) => {
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
+
 app.listen(PORT, "0.0.0.0", () => {
-  `console.log(TVPlay portal rodando na porta ${PORT})`;
+  console.log(`TVPlay portal rodando na porta ${PORT}`);
 });
