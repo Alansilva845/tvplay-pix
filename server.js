@@ -151,6 +151,7 @@ app.post("/api/create-payment", async (req, res) => {
     const { error: insertError } = await supabase
       .from("orders")
       .insert({
+        id: crypto.randomUUID(),
         order_id: externalReference,
         name,
         whatsapp,
