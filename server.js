@@ -319,7 +319,7 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
     const { data: order, error: findError } = await supabase
       .from("orders")
       .select("id")
-      .eq("id", req.params.id)
+      .eq("order_id", req.params.id)
       .maybeSingle();
 
     if (findError) return dbError(res, findError);
@@ -336,7 +336,7 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
         status: "activated",
         activated_at: new Date().toISOString()
       })
-      .eq("id", req.params.id);
+      .eq("order_id", req.params.id);
 
     if (updateError) return dbError(res, updateError);
 
