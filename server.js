@@ -228,10 +228,9 @@ app.post("/api/webhook", async (req, res) => {
     }
 
     const mpRes = await fetch(
-      https://api.mercadopago.com/v1/payments/${paymentId},
-      {
+     `https://api.mercadopago.com/v1/payments/${paymentId}`, {
         headers: {
-          Authorization: Bearer ${ACCESS_TOKEN}
+          Authorization: `Bearer ${ACCESS_TOKEN}`
         }
       }
     );
