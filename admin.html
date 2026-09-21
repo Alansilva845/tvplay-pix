@@ -90,7 +90,7 @@ async function carregar(){
       const status = p.status || "pending";
 
       const botao = status === "approved"
-        ? '<button class="botao" onclick="ativar(\'' + p.id + '\')">Marcar como ativado</button>'
+        ? '<button class="botao" onclick="ativar(\'' + p.order_id + '\')">Marcar como ativado</button>'
         : "";
 
       return `
