@@ -361,5 +361,5 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(TVPlay portal rodando na porta ${PORT});
+  `console.log(TVPlay portal rodando na porta ${PORT})`;
 });
