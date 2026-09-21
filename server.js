@@ -341,6 +341,66 @@ app.post("/api/admin/orders/:id/activate", basicAuth, async (req, res) => {
       findError = result.error;
     }
 
+    if (findError) {
+      return dbError(res, findError);
+    }
+
+    if (!order) {
+      return res.status(404).json({
+        error: "Pedido não encontrado."
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({
+        status: "activated",
+        activated_at: new Date().toISOString()
+      })
+      .eq("order_id", order.order_id);
+
+    if (updateError) {
+      return dbError(res, updateError);
+    }
+
+    res.json({
+      ok: true
+    });
+  } catch (e) {
+    console.error(e);
+
+    res.status(500).json({
+      error: "Erro interno."
+    });
+  }
+});
+
+    const identificador = String(req.params.id || "");
+    const isBigintId = /^\d+$/.test(identificador);
+
+    let order;
+    let findError;
+
+    if (isBigintId) {
+      const result = await supabase
+        .from("orders")
+        .select("id, order_id")
+        .eq("id", Number(identificador))
+        .maybeSingle();
+
+      order = result.data;
+      findError = result.error;
+    } else {
+      const result = await supabase
+        .from("orders")
+        .select("id, order_id")
+        .eq("order_id", identificador)
+        .maybeSingle();
+
+      order = result.data;
+      findError = result.error;
+    }
+
     if (findError) return dbError(res, findError);
 
     if (!order) {
